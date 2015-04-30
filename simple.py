@@ -11,10 +11,10 @@ import xmlrpclib
 SIMPLE_URL = 'https://pypi.python.org/simple/'
 
 def get_package_names_simple(simple_index=SIMPLE_URL):
-    resp = urllib2.urlopen(simple_index)
-    tree = ElementTree.parse(resp)
-    # resp = requests.get(simple_index)
-    # tree = ElementTree.fromstring(resp.content)
+    # resp = urllib2.urlopen(simple_index)
+    # tree = ElementTree.parse(resp)
+    resp = requests.get(simple_index)
+    tree = ElementTree.fromstring(resp.content)
     return [a.text for a in tree.iter('a')]
 
 def scrape_links(dist, simple_index=SIMPLE_URL):
