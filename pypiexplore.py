@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# download all source packages from https://pypi.python.org
+# explore packages stats
 
 import sys
 import os
