@@ -62,15 +62,15 @@ class Package(object):
 		self.python_version = ''
 		self.packagetype = ''
 
-def prune(releases, current_version):
-	for v, dist_list in releases.iteritems():
-		if v == current_version:
-			continue
-		for dist in dist_list:
-			path = '%s/%s' % (REPO, dist['filename']) 
-			if os.path.exists(path):
-				os.remove(path)
-				logging.info('Deleted %s' % dist['filename'])
+# def prune(releases, current_version):
+# 	for v, dist_list in releases.iteritems():
+# 		if v == current_version:
+# 			continue
+# 		for dist in dist_list:
+# 			path = '%s/%s' % (REPO, dist['filename']) 
+# 			if os.path.exists(path):
+# 				os.remove(path)
+# 				logging.info('Deleted %s' % dist['filename'])
 
 
 def worker(names):
