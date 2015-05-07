@@ -62,31 +62,30 @@ class Package(object):
 		self.python_version = ''
 		self.packagetype = ''
 
-# def prune(releases, current_version):
-# 	for v, dist_list in releases.iteritems():
-# 		if v == current_version:
-# 			continue
-# 		for dist in dist_list:
-# 			path = '%s/%s' % (REPO, dist['filename']) 
-# 			if os.path.exists(path):
-# 				os.remove(path)
-# 				logging.info('Deleted %s' % dist['filename'])
+def prune(releases, current_version):
+	for v, dist_list in releases.iteritems():
+		if v == current_version:
+			continue
+		for dist in dist_list:
+			path = '%s/%s' % (REPO, dist['filename']) 
+			if os.path.exists(path):
+				os.remove(path)
+				logging.info('Deleted %s' % dist['filename'])
 
 
 def worker(names):
 	packages = []
 	package = None
+	pid = os.getpid()
+	wfile = 'worker.%s' % pid
+	print 'starting worker file %s...' % wfile
+
 	for p in names:
 		try:
 			json_url = 'https://pypi.python.org/pypi/%s/json' % p
-			# js = urllib2.urlopen(json_url, timeout=10).read()
-			# package = json.loads(js)			
 			resp = requests.get(json_url, timeout=10)
 			if not resp.status_code == requests.codes.ok:
 				continue
-				# resp.raise_for_status()
-			
-			# package = json.loads(resp.content)			
 			package = resp.json()		
 		
 		except Exception, ex:
@@ -157,16 +156,10 @@ def worker(names):
 def main():
 	logging.basicConfig(level=logging.WARNING)
 	start = time.time()
-	# response = urllib2.urlopen('https://pypi.python.org/simple')
-	# html = response.read()
-	# pattern = re.compile(r"href='[\w\d_\.-]+'>[^<]+")
-	# captures = pattern.findall(html)
-	# names = sorted([c.split('>')[1] for c in captures])
 	
 	names = get_names()
 
 	N = 20
-
 	pool = mp.Pool(N)
 	random.shuffle(names)
 	chunks = list(get_chunks(names, N))
