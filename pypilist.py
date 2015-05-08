@@ -14,7 +14,6 @@ import minirepo
 
 
 def worker(names):
-	packages = []
 	package = None
 	pid = os.getpid()
 	wfile = 'worker.%s' % pid

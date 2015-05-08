@@ -51,16 +51,16 @@ def get_chunks(seq, num):
 		last += avg
 	return out
 
-class Package(object):
-	def __init__(self):
-		self.name = ''
-		self.version = ''
-		self.url = ''
-		self.filename = ''
-		self.size = 0
-		self.md5_digest = ''
-		self.python_version = ''
-		self.packagetype = ''
+# class Package(object):
+# 	def __init__(self):
+# 		self.name = ''
+# 		self.version = ''
+# 		self.url = ''
+# 		self.filename = ''
+# 		self.size = 0
+# 		self.md5_digest = ''
+# 		self.python_version = ''
+# 		self.packagetype = ''
 
 def prune(releases, current_version):
 	for v, dist_list in releases.iteritems():
@@ -74,11 +74,11 @@ def prune(releases, current_version):
 
 
 def worker(names):
-	packages = []
 	package = None
 	pid = os.getpid()
-	wfile = 'worker.%s' % pid
-	print 'starting worker file %s...' % wfile
+	wname = 'worker.%s' % pid
+	print 'starting worker file %s...' % wname
+	afile = open(wname, 'a')
 
 	for p in names:
 		try:
@@ -94,63 +94,64 @@ def worker(names):
 		# delete old versions if they are local
 		prune(package['releases'], package['info']['version'])
 
-		pak = Package()
+		# pak = Package()
 		info = package['info']
 		
 		for url in package['urls']:
-			pak.filename 		= url['filename']
-			pak.packagetype 	= url['packagetype']
-			pak.python_version  = url['python_version']
+			filename 		= url['filename']
+			packagetype 	= url['packagetype']
+			python_version  = url['python_version']
 			
-			if pak.python_version not in PYTHON_VERSIONS:
-				logging.debug('Skipping python version %s: %s...' % (pak.python_version, pak.filename))
+			if python_version not in PYTHON_VERSIONS:
+				logging.debug('Skipping python version %s: %s...' % (python_version, filename))
 				continue
 			
 			
-			if pak.packagetype not in PACKAGE_TYPES:
-				logging.debug('Skipping package type %s: %s...' % (pak.packagetype, pak.filename))
+			if packagetype not in PACKAGE_TYPES:
+				logging.debug('Skipping package type %s: %s...' % (packagetype, filename))
 				continue
 			
 			
 			extention = ''
-			if '.' in pak.filename:
-				extension = pak.filename.split('.')[-1]
+			if '.' in filename:
+				extension = filename.split('.')[-1]
 			if extension not in EXTENSIONS:
-				logging.debug('Skipping extension %s: %s...' % (extension, pak.filename))
+				logging.debug('Skipping extension %s: %s...' % (extension, filename))
 				continue
 
-			pak.name 		= info['name']
-			pak.url 		= url['url']						
-			pak.version 	= info['version']
-			pak.size 		= url['size']
-			pak.md5_digest 	= url['md5_digest']			
-			packages.append(pak)
-
+			name 			= info['name']
+			download_url 	= url['url']						
+			version 		= info['version']
+			size 			= url['size']
+			md5_digest 		= url['md5_digest']			
+			
 			# skip if already in repo
-			path = '%s/%s' % (REPO, pak.filename)
-			if os.path.exists(path) and os.lstat(path).st_size == pak.size:
-				logging.debug('Already local: %s' % pak.filename)
+			path = '%s/%s' % (REPO, filename)
+			if os.path.exists(path) and os.lstat(path).st_size == size:
+				logging.debug('Already local: %s' % filename)
 				continue
 			
 			try:
-				# data = urllib2.urlopen(pak.url, timeout=300).read()
-				resp = requests.get(pak.url, timeout=300)
+				resp = requests.get(download_url, timeout=300)
 				if not resp.status_code == requests.codes.ok:
 					resp.raise_for_status()
 
-				data = resp.content
+				# write json info
+				afile.write('%s,\n' % resp.json())
+				
+				# save file
 				with open(path,'wb') as w:
-					w.write(data)
+					w.write(resp.content)
 				
 				# verify with md5
-				check = 'Ok' if hashlib.md5(data).hexdigest() == pak.md5_digest else 'md5 failed'
-				logging.warning('Downloaded: %-60s %s' % (pak.filename,check))
+				check = 'Ok' if hashlib.md5(resp.content).hexdigest() == md5_digest else 'md5 failed'
+				logging.warning('Downloaded: %-60s %s' % (filename,check))
 				
 			except Exception, ex:
-				logging.error('Faild to download %s: %s' % (pak.url, ex))
-			
-
-	return packages
+				logging.error('Faild to download %s: %s' % (download_url, ex))
+	
+	afile.close()	
+	return pid
 
 
 def main():
