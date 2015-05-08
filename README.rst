@@ -34,7 +34,7 @@ Use pip
 Via package
 -----------
 
-Download the latest package file from pypi.python.org/pypi/minirepo_:
+Download the latest package file from https://pypi.python.org/pypi/minirepo:
 
 .. code:: bash
 
