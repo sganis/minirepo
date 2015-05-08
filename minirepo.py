@@ -1,19 +1,23 @@
 #!/usr/bin/env python
 #
 # download all source packages from https://pypi.python.org
-
 import sys
 import os
-import requests
-import json
 import time
+import shutil
 import random
-import multiprocessing as mp
 import hashlib
 import logging
+import tempfile
+import json
+import requests
+import multiprocessing as mp
 from xml.etree import ElementTree
 
-REPO = '/home/user/repo/minirepo'
+REPO = os.path.expanduser("~/minirepo")
+TEMP = tempfile.mkdtemp()
+MAX = 0
+PROCESSES = 5
 
 # PYTHON_VERSIONS = ['2', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.7.6', '3.0', '3.1', '3.2', '3.3', '3.4', '3.5', 'any', 'cp25', 'cp26', 'cp27', 'cp31', 'cp32', 'cp33', 'cp34', 'cp35', 'image/tools/scikit_image', 'py2', 'py2.py3', 'py2.py3.cp26.cp27.cp32.cp33.cp34.cp35.pp27.pp32', 'py2.py3.cp27.cp26.cp32.cp33.cp34.pp27', 'py26', 'py27', 'py27.py32.py33', 'py3', 'py32, py33, py34', 'py33', 'py34', 'python', 'source']
 # PACKAGE_TYPES = ['bdist_dmg', 'bdist_dumb', 'bdist_egg', 'bdist_msi', 'bdist_rpm', 'bdist_wheel', 'bdist_wininst', 'sdist']
@@ -53,39 +57,49 @@ def get_chunks(seq, num):
 
 
 def prune(releases, current_version):
-	for v, dist_list in releases.iteritems():
+	for v, dist_list in releases.items():
 		if v == current_version:
 			continue
 		for dist in dist_list:
 			path = '%s/%s' % (REPO, dist['filename']) 
 			if os.path.exists(path):
 				os.remove(path)
-				logging.info('Deleted %s' % dist['filename'])
+				logging.warning('Deleted %s' % dist['filename'])
 
 
 def worker(names):
 	package = None
 	pid = os.getpid()
-	wname = 'worker.%s' % pid
-	print 'starting worker file %s...' % wname
+	wname = TEMP + '/worker.%s' % pid
+	print('starting worker file %s...' % wname)
 	afile = open(wname, 'a')
-
-	for p in names:
+	total = len(names)
+	i = 0
+	for p in names:	
 		try:
+			i+=1
 			json_url = 'https://pypi.python.org/pypi/%s/json' % p
 			resp = requests.get(json_url, timeout=10)
+
 			if not resp.status_code == requests.codes.ok:
 				continue
 			package = resp.json()		
+			
+			# wait to avoid getting refused from server due to too many connections
+			# if (i % 10) == 0:
+			# 	time.sleep(random.uniform(1.0,2.5)) 
 		
-		except Exception, ex:
+		except Exception as ex:
 			logging.error('Failed to get json from %s, error: %s' % (json_url, ex))
-		
-		# delete old versions if they are local
-		prune(package['releases'], package['info']['version'])
+			continue
 
-		# pak = Package()
-		info = package['info']
+		info 	= package['info']
+		name 	= info['name']
+		version = info['version']
+
+		# delete old versions if they are local
+		prune(package['releases'], version)
+
 		
 		for url in package['urls']:
 			filename 		= url['filename']
@@ -109,9 +123,7 @@ def worker(names):
 				logging.debug('Skipping extension %s: %s...' % (extension, filename))
 				continue
 
-			name 			= info['name']
 			download_url 	= url['url']						
-			version 		= info['version']
 			size 			= url['size']
 			md5_digest 		= url['md5_digest']			
 			
@@ -125,50 +137,88 @@ def worker(names):
 				resp = requests.get(download_url, timeout=300)
 				if not resp.status_code == requests.codes.ok:
 					resp.raise_for_status()
-
-				# write json info
-				afile.write('%s,\n' % resp.json())
 				
+				# write json info
+				afile.write('%s,\n' % package)				
+
 				# save file
 				with open(path,'wb') as w:
 					w.write(resp.content)
 				
 				# verify with md5
 				check = 'Ok' if hashlib.md5(resp.content).hexdigest() == md5_digest else 'md5 failed'
-				logging.warning('Downloaded: %-60s %s' % (filename,check))
+				progress = int(i/float(total)/PROCESSES*100.0)
+				logging.warning('Downloaded: %-60s %s process %s %s%% %s/%s' % (filename,check,pid,progress,i,int(total/float(PROCESSES))))
 				
-			except Exception, ex:
+			except Exception as ex:
 				logging.error('Faild to download %s: %s' % (download_url, ex))
-	
+			
+		# for testing, a minimal number of downloads will be specified
+		if MAX > 0 and i==MAX:
+			break
+
 	afile.close()	
 	return pid
 
 
-def main():
-	logging.basicConfig(level=logging.WARNING)
-	start = time.time()
-	
-	names = get_names()
+def get_config():
+	global REPO, PROCESSES
+	config_file = os.path.expanduser("~/.minirepo")
+	try:
+		config 		= json.load(open(config_file))
+		REPO 		= config['repository']
+		PROCESSES 	= config['processes']
+	except:
+		newrepo = raw_input('Repository folder [%s]: ' % REPO)
+		if newrepo:
+			REPO = newrepo
+		newprocesses = raw_input('Number of processes [%s]: ' % PROCESSES)
+		if newprocesses:
+			PROCESSES = newprocesses
+		config = {}
+		config["repository"]=REPO
+		config["processes"]=PROCESSES
+		config["python_versions"]=PYTHON_VERSIONS
+		config["package_types"]=PACKAGE_TYPES
+		config["extensions"]=EXTENSIONS
 
-	N = 5
-	pool = mp.Pool(N)
+		with open(config_file, 'w') as w:
+			json.dump(config, w, indent=2)
+
+	for c in sorted(config):
+		print('%-15s = %s' % (c,config[c]))
+	print('Using config file %s ' % config_file)
+
+	return config
+
+
+def main():
+	print('/******** Minirepo ********/')
+	config = get_config()
+	if not os.path.isdir(REPO):
+		os.mkdir(REPO)
+
+	logging.basicConfig(level=logging.WARNING)
+	start = time.time()	
+	names = get_names()
+	pool = mp.Pool(PROCESSES)
 	random.shuffle(names)
-	chunks = list(get_chunks(names, N))
-	processes = pool.map_async(worker, chunks).get(timeout=99999)
+	chunks = list(get_chunks(names, PROCESSES))
+	pids = pool.map_async(worker, chunks).get(timeout=99999)
 	
 	# save json database
 	packages_list = []
-	with open('pypilist.json','w') as w:
+	with open(REPO + '/packages.json','w') as w:
 		w.write('[\n')
-		for pid in processes:
-			wfile = 'worker.%s' % pid
+		for pid in pids:
+			wfile = TEMP + '/worker.%s' % pid
 			with open(wfile) as r:
 				w.write(r.read())
 			os.remove(wfile)
 		w.write(']\n')
-
-	print 'time:', (time.time()-start)
-
+	# cleanup
+	shutil.rmtree(TEMP)
+	print('time:', (time.time()-start))
 
 
 
