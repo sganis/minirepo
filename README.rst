@@ -2,7 +2,7 @@
 .. _pip: https://pip.pypa.io
 .. _bandersnatch: https://pypi.python.org/pypi/bandersnatch
 .. _basket: https://pypi.python.org/pypi/Basket
-.. _minirepo: https://pypi.python.org/pypi/minirepo
+.. _pypi.python.org/pypi/minirepo: https://pypi.python.org/pypi/minirepo
 
 
 ********
@@ -13,8 +13,12 @@ Create a local pypi repository to use pip off-line.
 
 .. contents:: 
 
-Minirepo is a command-line program that downloads Python packages from pypi_, so you can use pip_ without internet. I needed to maintain a python repository in an isolated cluster environment, and after trying several tools to mirror pypi index, I dedided to make my own tool. Some mirroring tools such us bandersnatch_ didn't meet my requirements, because I wanted to do a selective mirror, only downlowing all sources for python 2.7, for example. Bandersnatch gets the full content, about 140GB at the time of my first version of minirepo.
-The I was inspired by basket_, which is almost what I wanted, but you need to specify the list of packages to download. I ended up using the json API to get the packages that I needed, and then calling basket to download or update the packages. In the end, that approach was slow and buggy, so I wrote this small program to do what I just needed.
+Minirepo is a command-line program that downloads Python packages from pypi.python.org_, so you can use pip_ without internet. I needed to maintain a python repository in an isolated cluster environment, and after trying several tools to mirror pypi index, I dedided to make my own tool. 
+
+Some mirroring tools such us bandersnatch_ didn't meet my requirements, because I wanted to do a selective mirror, only downlowing all sources for python 2.7, for example. Bandersnatch gets the full content, about 140GB at the time of my first version of minirepo.
+
+Then I was inspired by basket_, which is almost what I wanted, but you need to specify the list of packages to download. I ended up using the json API to get the packages that I needed, and then calling basket to download or update the packages. In the end, that approach was slow and buggy, so I wrote this small program to do what I just needed. Now, my minirepo folder has about 12GB with all the latest packages.
+
 
 
 Installation
@@ -30,7 +34,7 @@ Use pip
 Via package
 -----------
 
-Download the latest package file from minirepo_:
+Download the latest package file from pypi.python.org/pypi/minirepo_:
 
 .. code:: bash
 
@@ -53,43 +57,43 @@ Usage
 .. code::
 	
 	# run it from the command line:
-    $ minirepo
+	$ minirepo
 
 	# or run the python script if you didn't install it:
-    $ ./minirepo.py
+	$ ./minirepo.py
 
 The firt time it's executed, the program will ask you for the local repository path, which defaults to ~/minirepo in Linux. A json configuration file is created and saved as ~/.minirepo, that you can edit to meet your requirements. This configuration file looks like this:
 
-.. code::javascript
+.. code:: javascript
 	{
-	  "processes": 20, 
-	  "package_types": [
-	    "bdist_egg", 
-	    "bdist_wheel", 
-	    "sdist"
-	  ], 
-	  "extensions": [
-	    "bz2", 
-	    "egg", 
-	    "gz", 
-	    "tgz", 
-	    "whl", 
-	    "zip"
-	  ], 
-	  "python_versions": [
-	    "2.7", 
-	    "any", 
-	    "cp27", 
-	    "py2", 
-	    "py27", 
-	    "source"
-	  ], 
-	  "repository": "/home/user/minirepo"
+		"processes": 20, 
+		"package_types": [
+			"bdist_egg", 
+			"bdist_wheel", 
+			"sdist"
+		], 
+		"extensions": [
+			"bz2", 
+			"egg", 
+			"gz", 
+			"tgz", 
+			"whl", 
+			"zip"
+		], 
+		"python_versions": [
+			"2.7", 
+			"any", 
+			"cp27", 
+			"py2", 
+			"py27", 
+			"source"
+		], 
+		"repository": "/home/user/minirepo"
 	}
 
 Minirepo uses packages_types, extensions, and python_versions as filters. I was analysing the full list of packages available in pypi_, and it looks that all the options are something like the list below, you can try any other option. For me, I was only interested in python 2.7 packages, sources, wheels and eegs distributions, and some extensions.
 
-.. code::python
+.. code:: python
 
 	PYTHON_VERSIONS = [
 		'2', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.7.6', '3.0', '3.1', 
