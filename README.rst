@@ -65,6 +65,7 @@ Usage
 The firt time it's executed, the program will ask you for the local repository path, which defaults to ~/minirepo in Linux. A json configuration file is created and saved as ~/.minirepo, that you can edit to meet your requirements. This configuration file looks like this:
 
 .. code:: javascript
+
 	{
 		"processes": 20, 
 		"package_types": [
@@ -91,7 +92,8 @@ The firt time it's executed, the program will ask you for the local repository p
 		"repository": "/home/user/minirepo"
 	}
 
-Minirepo uses packages_types, extensions, and python_versions as filters. I was analysing the full list of packages available in pypi_, and it looks that all the options are something like the list below, you can try any other option. For me, I was only interested in python 2.7 packages, sources, wheels and eegs distributions, and some extensions.
+
+Minirepo uses packages_types, extensions, and python_versions as filters. I was analysing the full list of packages available in pypi.python.org_, and it looks that all the options are something like the list below, you can try any other option. For me, I was only interested in python 2.7 packages, sources, wheels and eegs distributions, and some extensions.
 
 .. code:: python
 
