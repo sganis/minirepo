@@ -51,16 +51,6 @@ def get_chunks(seq, num):
 		last += avg
 	return out
 
-# class Package(object):
-# 	def __init__(self):
-# 		self.name = ''
-# 		self.version = ''
-# 		self.url = ''
-# 		self.filename = ''
-# 		self.size = 0
-# 		self.md5_digest = ''
-# 		self.python_version = ''
-# 		self.packagetype = ''
 
 def prune(releases, current_version):
 	for v, dist_list in releases.iteritems():
@@ -160,20 +150,22 @@ def main():
 	
 	names = get_names()
 
-	N = 20
+	N = 5
 	pool = mp.Pool(N)
 	random.shuffle(names)
 	chunks = list(get_chunks(names, N))
-	packages = pool.map_async(worker, chunks).get(timeout=99999)
+	processes = pool.map_async(worker, chunks).get(timeout=99999)
 	
-	# save database
-	packages_dic = {}
-	for pak in packages:
-		for p in pak:
-			if p.name:
-				packages_dic[p.name] = p.__dict__
-	with open('packages.json','w') as w:
-		json.dump(packages_dic, w, indent=2, sort_keys=True)
+	# save json database
+	packages_list = []
+	with open('pypilist.json','w') as w:
+		w.write('[\n')
+		for pid in processes:
+			wfile = 'worker.%s' % pid
+			with open(wfile) as r:
+				w.write(r.read())
+			os.remove(wfile)
+		w.write(']\n')
 
 	print 'time:', (time.time()-start)
 

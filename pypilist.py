@@ -42,7 +42,7 @@ def worker(names):
 def main():
 	start = time.time()
 	names = minirepo.get_names()
-	N = 40
+	N = 10
 	pool = mp.Pool(N)
 	random.shuffle(names)
 	chunks = list(minirepo.get_chunks(names, N))
