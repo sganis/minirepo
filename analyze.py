@@ -10,9 +10,12 @@ import json
 def main():
 	start = time.time()
 
-	with open('pypilist.json.bak') as r:
+	# db = 'pypilist.json.bak'
+	db = os.path.expanduser('~/minirepo/packages.json')
+	with open(db) as r:
+		# packages = yaml.load(r.read().replace('\t',' ').replace('\n',' '))
 		packages = json.load(r)
-
+	
 	total = 0
 	combinations = {}
 	pyversions = {}
@@ -88,12 +91,11 @@ def main():
 	header = 'name,author,email,summary,version,size,oldest,newest,downloads\n'
 	with open('packages.csv','w') as w:
 		w.write(header)
-		print(header)
 		for name, r in table.items():
 			if r[7]>0:
 				line = '"%s","%s","%s","%s","%s",%s,%s,%s,%s\n' % (name, r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7])
 				# print (line)
-				w.write(line)
+				w.write(line.encode('utf-8'))
 				# break			
 	print ('time:', (time.time()-start))
 

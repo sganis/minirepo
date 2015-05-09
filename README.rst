@@ -3,7 +3,7 @@
 .. _bandersnatch: https://pypi.python.org/pypi/bandersnatch
 .. _basket: https://pypi.python.org/pypi/Basket
 .. _pypi.python.org/pypi/minirepo: https://pypi.python.org/pypi/minirepo
-
+.. _github: https://github.com/sganis/minirepo
 
 ********
 Minirepo
@@ -20,36 +20,37 @@ Some mirroring tools such us bandersnatch_ didn't meet my requirements, because 
 Then I was inspired by basket_, which is almost what I wanted, but you need to specify the list of packages to download. I ended up using the json API to get the packages that I needed, and then calling basket to download or update the packages. In the end, that approach was slow and buggy, so I wrote this small program to do what I just needed. Now, my minirepo folder has about 12GB with all the latest packages.
 
 
-
 Installation
 ============
 
 Use pip
 -------
 
+The easiest way to install it is to use pip:
+
 .. code:: bash
 
     $ pip install minirepo
 
-Via package
------------
+Or download and install
+-----------------------
 
-Download the latest package file from https://pypi.python.org/pypi/minirepo:
+Download the package file from https://pypi.python.org/pypi/minirepo, or the latest development version from https://github.com/sganis/minirepo, then:
 
 .. code:: bash
 
-    $ tar xvzf minirepo-1.0.1.tar.gz
-    $ cd minirepo
+    $ tar xvzf minirepo-1.0.2.tar.gz
+    $ cd minirepo-1.0.2
     $ python setup.py install
 
-Via git or download
--------------------
+You can also use git:
 
 .. code:: bash
 
     $ git clone https://github.com/sganis/minirepo.git
     $ cd minirepo
     $ python setup.py install
+
 
 Usage
 =====
@@ -67,29 +68,11 @@ The firt time it's executed, the program will ask you for the local repository p
 .. code:: javascript
 
 	{
-		"processes": 20, 
-		"package_types": [
-			"bdist_egg", 
-			"bdist_wheel", 
-			"sdist"
-		], 
-		"extensions": [
-			"bz2", 
-			"egg", 
-			"gz", 
-			"tgz", 
-			"whl", 
-			"zip"
-		], 
-		"python_versions": [
-			"2.7", 
-			"any", 
-			"cp27", 
-			"py2", 
-			"py27", 
-			"source"
-		], 
-		"repository": "/home/user/minirepo"
+		"processes"       : 20, 
+		"repository"      : "/home/user/minirepo"
+		"package_types"   : ["bdist_egg","bdist_wheel","sdist"], 
+		"extensions"      : ["bz2","egg","gz","tgz","whl","zip"], 
+		"python_versions" : ["2.7","any","cp27","py2","py27","source"], 
 	}
 
 
