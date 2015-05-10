@@ -39,8 +39,8 @@ Download the package file from https://pypi.python.org/pypi/minirepo, or the lat
 
 .. code:: bash
 
-    $ tar xvzf minirepo-1.0.2.tar.gz
-    $ cd minirepo-1.0.2
+    $ tar xvzf minirepo-1.0.3.tar.gz
+    $ cd minirepo-1.0.3
     $ python setup.py install
 
 You can also use git:
