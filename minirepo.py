@@ -39,6 +39,12 @@ session = requests.Session()
 adapter = requests.adapters.HTTPAdapter(max_retries=1)
 session.mount('https://', adapter)
 
+def bytes_human(num):
+	for x in ['bytes','KB','MB','GB']:
+		if num < 1024.0:
+			return "%3.1f%s" % (num, x)
+		num /= 1024.0
+	return "%3.1f%s" % (num, 'TB')
 
 def get_names():
 	# xmlrpc is slower
@@ -68,19 +74,26 @@ def get_chunks(seq, num):
 
 
 def prune(releases, current_version):
+	'''
+	delete all versions different that current_version
+	and return bytes deleted
+	'''
+	bytes = 0
 	for v, dist_list in releases.items():
 		if v == current_version:
 			continue
 		for dist in dist_list:
 			path = '%s/%s' % (REPOSITORY, dist['filename']) 
 			if os.path.exists(path):
+				bytes += os.stat(path).st_size
 				os.remove(path)
 				logging.warning('Deleted   : %s' % dist['filename'])
-
+	return bytes
 
 def worker(names):
 	'''
-	function to run in parallel, names is a list of packages names
+	function to run in parallel, names is a list of packages names,
+	return tuple (pid, total packages, total bytes, total bytes cleaned)
 	'''
 	package = None
 	pid = os.getpid()
@@ -89,9 +102,12 @@ def worker(names):
 
 	afile = open(wname, 'a')
 
-	total = 1.0*len(names)
 	i = 0
-
+	total = 1.0*len(names)
+	packages_downloaded = 0
+	bytes_downloaded = 0
+	bytes_cleaned = 0
+	
 	for p in names:	
 		try:
 			i+=1
@@ -119,7 +135,7 @@ def worker(names):
 		version = info['version']
 
 		# delete old versions if they are local
-		prune(package['releases'], version)
+		bytes_cleaned += prune(package['releases'], version)
 
 		
 		for url in package['urls']:
@@ -162,6 +178,10 @@ def worker(names):
 				with open(path,'wb') as w:
 					w.write(resp.content)
 				
+				# sum total bytes and count
+				bytes_downloaded += size
+				packages_downloaded += 1
+
 				# verify with md5
 				check = 'Ok' if hashlib.md5(resp.content).hexdigest() == md5_digest else 'md5 failed'
 				progress = int(i/total*100.0)
@@ -175,7 +195,7 @@ def worker(names):
 			break
 
 	afile.close()
-	return pid
+	return (pid, packages_downloaded, bytes_downloaded, bytes_cleaned)
 
 
 def get_config():
@@ -252,7 +272,7 @@ def main(repository='', processes=0):
 
 
 	assert REPOSITORY
-	assert PROCESSES > 0
+	assert PROCESSES
 
 	if not os.path.isdir(REPOSITORY):
 		os.mkdir(REPOSITORY)
@@ -272,14 +292,28 @@ def main(repository='', processes=0):
 	chunks = list(get_chunks(names, PROCESSES))
 	
 	# run in parallel
-	pids = pool.map_async(worker, chunks).get(timeout=99999)
+	# (pids, totals, bytes, cleaned)
+	results = pool.map_async(worker, chunks).get(timeout=99999)
 	
+	# get summary
+	pids 				= [r[0] for r in results]
+	packages_downloaded = sum([r[1] for r in results])
+	bytes_downloaded 	= sum([r[2] for r in results])
+	bytes_cleaned 		= sum([r[3] for r in results])
+
 	# store full list of packages in json format for later analysis
 	save_json(pids)
 
 	# cleanup
 	shutil.rmtree(TEMP)
 	print('temp folder deleted: %s' % TEMP)
+
+	# print summary
+	print('summary:')
+	print('packages downloaded = %s' % packages_downloaded)
+	print('bytes downloaded    = %s' % bytes_human(bytes_downloaded))
+	print('bytes cleaned       = %s' % bytes_human(bytes_cleaned))
+	
 	print('time:', (time.time()-start))
 
 
