@@ -97,8 +97,24 @@ Minirepo uses packages_types, extensions, and python_versions as filters. I was 
 	]
 
 
-TODO
-====
-
 Use pip without internet
-------------------------
+========================
+
+..code:: bash
+
+	$ pip install --no-index --find-links=/home/user/minirepo <package-name>
+
+
+I prefer to setup environment variables in my profile so I don't have to provide extra command line arguments.
+
+..code:: bash
+
+	# save these 2 variable in your profile 
+	$ export PIP_NO_INDEX=true
+	$ export PIP_FIND_LINKS=/home/user/minirepo
+	
+	# then run pip as usual
+	$ pip install <package-name>
+
+
+
