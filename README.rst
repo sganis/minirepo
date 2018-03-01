@@ -9,7 +9,8 @@
 Minirepo
 ********
 
-Create a local pypi repository to use pip off-line.
+Create a local pypi repository to use pip off-line. 
+(Updated to mirror python 3 packages).
 
 .. contents:: 
 

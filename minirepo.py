@@ -11,9 +11,10 @@ import logging
 import tempfile
 import json
 import requests
-import tarfile
 import multiprocessing as mp
 from xml.etree import ElementTree
+
+# logging.basicConfig(level=logging.INFO)
 
 # global variables
 # repository folder
@@ -26,22 +27,26 @@ MAX = 0
 PROCESSES = 10
 
 # filters, only interested in this types
-# PYTHON_VERSIONS = ['2.7', 'any', 'cp27', 'py2', 'py2.py3', 'py27', 'source']
-PYTHON_VERSIONS = ['cp37',]
-# PACKAGE_TYPES = ['bdist_egg', 'bdist_wheel', 'sdist']
+PYTHON_VERSIONS = [
+	'2', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.7.6', 
+	'3', '3.0', '3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', 
+	'cp26', 'cp27', 'cp3', 'cp32', 'cp33', 'cp34', 'cp35', 
+	'cp36', 'cp37', 'py2', 'py2.py3', 'py26', 'py27', 'py3', 
+	'py3.5', 'py3.6', 'py3.7', 'py32, py33, py34', 'py35', 'py36', 
+	'py37', 'source', 'any']
+PACKAGE_TYPES = ['bdist_egg', 'bdist_wheel', 'sdist']
+EXTENSIONS = [ 'bz2', 'egg', 'exe', 'gz', 'tgz', 'whl', 'zip']
+PLATFORMS = ['linux', 'win32', 'win_amd64', 'macosx']
+
+# only python 3.7 for windows x64
+PYTHON_VERSIONS = ['cp37','py3','py2.py3','py3.7','py37','any']
 PACKAGE_TYPES = ['bdist_wheel',]
-# EXTENSIONS = ['bz2', 'egg', 'gz', 'tgz', 'whl', 'zip']
 EXTENSIONS = ['whl',]
-# OS = ['linux', 'win_amd64', 'macosx']
-OS = ['win_amd64',]
-# available options in pypi
-# PYTHON_VERSIONS = ['2', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.7.6', '3.0', '3.1', '3.2', '3.3', '3.4', '3.5', 'any', 'cp25', 'cp26', 'cp27', 'cp31', 'cp32', 'cp33', 'cp34', 'cp35', 'image/tools/scikit_image', 'py2', 'py2.py3', 'py2.py3.cp26.cp27.cp32.cp33.cp34.cp35.pp27.pp32', 'py2.py3.cp27.cp26.cp32.cp33.cp34.pp27', 'py26', 'py27', 'py27.py32.py33', 'py3', 'py32, py33, py34', 'py33', 'py34', 'python', 'source']
-# PACKAGE_TYPES = ['bdist_dmg', 'bdist_dumb', 'bdist_egg', 'bdist_msi', 'bdist_rpm', 'bdist_wheel', 'bdist_wininst', 'sdist']
-# EXTENSIONS = ['bz2', 'deb', 'dmg', 'egg', 'exe', 'gz', 'msi', 'rpm', 'tgz', 'whl', 'zip']
+PLATFORMS = ['win_amd64',]
 
 # I had to do this to setup max_retries in requests
 session = requests.Session()
-adapter = requests.adapters.HTTPAdapter(max_retries=1)
+adapter = requests.adapters.HTTPAdapter(max_retries=2)
 session.mount('https://', adapter)
 
 def bytes_human(num):
@@ -150,30 +155,35 @@ def worker(names):
 			md5_digest 		= url['md5_digest']			
 			
 			if python_version not in PYTHON_VERSIONS:
-				logging.debug('Skipping python version %s: %s...' % (python_version, filename))
+				logging.info('Skipping python version %s: %s...' % (python_version, filename))
 				continue
-
-			if not 'win_amd64' in filename:
-				logging.debug('Skipping package OS %s: %s...' % ('win_amd64', filename))
-				continue
-			
+	
 			
 			if packagetype not in PACKAGE_TYPES:
-				logging.debug('Skipping package type %s: %s...' % (packagetype, filename))
+				logging.info('Skipping package type %s: %s...' % (packagetype, filename))
 				continue
 			
 			extention = ''
 			if '.' in filename:
 				extension = filename.split('.')[-1]
 			if extension not in EXTENSIONS:
-				logging.debug('Skipping extension %s: %s...' % (extension, filename))
+				logging.info('Skipping extension %s: %s...' % (extension, filename))
 				continue
 
+			if len([p for p in PLATFORMS if not p in filename]) > 0:
+				logging.info('Skipping package patform.')
+				continue
+
+			# if 'macosx' in filename or 'linux' in filename: # macosx package
+			# 	print(filename)
+			# 	assert False
 			
+
+
 			# skip if already in repo
 			path = '%s/%s' % (REPOSITORY, filename)
 			if os.path.exists(path) and os.lstat(path).st_size == size:
-				logging.debug('Already local: %s' % filename)
+				logging.info('Already local: %s' % filename)
 				continue
 			
 			try:
@@ -254,9 +264,10 @@ def save_json(pids):
 	with open(db, 'a') as a:
 		a.write('\n]\n')
 
-def make_tarfile(tarfilename, directory):
-    with tarfile.open(tarfilename, "w") as tar:
-        tar.add(directory, arcname=os.path.basename(os.path.realpath(directory)))
+# def make_tarfile(tarfilename, directory):
+# 	import tarfile
+#     with tarfile.open(tarfilename, "w") as tar:
+#         tar.add(directory, arcname=os.path.basename(os.path.realpath(directory)))
 
 
 
@@ -329,9 +340,9 @@ def main(repository='', processes=0):
 	
 	print('time:', (time.time()-start))
 
-	logging.warning('making tar file...')
-	tar = '/home/minirepo.tar'
-	make_tarfile(tar, REPOSITORY)
+	# logging.warning('making tar file...')
+	# tar = '/home/minirepo.tar'
+	# make_tarfile(tar, REPOSITORY)
 	logging.warning('minirepo mirror completed.')
 	
 

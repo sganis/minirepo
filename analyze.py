@@ -11,13 +11,12 @@ def main():
 	start = time.time()
 
 	# db = 'pypilist.json.bak'
-	db = os.path.expanduser('~/minirepo/packages.json')
+	db = os.path.expanduser('/home/minirepo/packages.json')
 	with open(db) as r:
 		# packages = yaml.load(r.read().replace('\t',' ').replace('\n',' '))
 		packages = json.load(r)
 	
 	total = 0
-	combinations = {}
 	pyversions = {}
 	packagetypes = {}
 	extensions = {}
@@ -42,11 +41,6 @@ def main():
 			python_version = u['python_version']
 			if python_version not in pyversions:
 				pyversions[python_version] = python_version
-
-			key = '%s %s %s' % (python_version, packagetype , extension)
-			if key not in combinations:
-				combinations[key] = [u['filename'],0]
-			combinations[key][1] += 1
 
 		# 'author,email,version,size,summary,
 		# oldest,newest,downloads'
@@ -79,14 +73,6 @@ def main():
 	print("Pyton versions:", sorted(pyversions))
 	print("Package types:", sorted(packagetypes))
 	print("Extensions:", sorted(extensions))
-	
-	print("Combinations:")
-
-	i = 0
-	for t in sorted(combinations):
-		i += 1
-		print('%3d) %-30s [packages: %6d]' % (i, t, combinations[t][1]))
-		# print('%s,%s,%s' % (i, t, combinations[t][1]))
 
 	header = 'name,author,email,summary,version,size,oldest,newest,downloads\n'
 	with open('packages.csv','w') as w:
