@@ -11,6 +11,7 @@ import logging
 import tempfile
 import json
 import requests
+import tarfile
 import multiprocessing as mp
 from xml.etree import ElementTree
 
@@ -25,10 +26,14 @@ MAX = 0
 PROCESSES = 10
 
 # filters, only interested in this types
-PYTHON_VERSIONS = ['2.7', 'any', 'cp27', 'py2', 'py2.py3', 'py27', 'source']
-PACKAGE_TYPES = ['bdist_egg', 'bdist_wheel', 'sdist']
-EXTENSIONS = ['bz2', 'egg', 'gz', 'tgz', 'whl', 'zip']
-
+# PYTHON_VERSIONS = ['2.7', 'any', 'cp27', 'py2', 'py2.py3', 'py27', 'source']
+PYTHON_VERSIONS = ['cp37',]
+# PACKAGE_TYPES = ['bdist_egg', 'bdist_wheel', 'sdist']
+PACKAGE_TYPES = ['bdist_wheel',]
+# EXTENSIONS = ['bz2', 'egg', 'gz', 'tgz', 'whl', 'zip']
+EXTENSIONS = ['whl',]
+# OS = ['linux', 'win_amd64', 'macosx']
+OS = ['win_amd64',]
 # available options in pypi
 # PYTHON_VERSIONS = ['2', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.7.6', '3.0', '3.1', '3.2', '3.3', '3.4', '3.5', 'any', 'cp25', 'cp26', 'cp27', 'cp31', 'cp32', 'cp33', 'cp34', 'cp35', 'image/tools/scikit_image', 'py2', 'py2.py3', 'py2.py3.cp26.cp27.cp32.cp33.cp34.cp35.pp27.pp32', 'py2.py3.cp27.cp26.cp32.cp33.cp34.pp27', 'py26', 'py27', 'py27.py32.py33', 'py3', 'py32, py33, py34', 'py33', 'py34', 'python', 'source']
 # PACKAGE_TYPES = ['bdist_dmg', 'bdist_dumb', 'bdist_egg', 'bdist_msi', 'bdist_rpm', 'bdist_wheel', 'bdist_wininst', 'sdist']
@@ -59,7 +64,6 @@ def get_names():
     tree = ElementTree.fromstring(resp.content)
     return [a.text for a in tree.iter('a')]
 
-
 def get_chunks(seq, num):
 	"""split seq in chunks of size num,
 	used to divide tasks for workers
@@ -71,7 +75,6 @@ def get_chunks(seq, num):
 		out.append(seq[int(last):int(last + avg)])
 		last += avg
 	return out
-
 
 def prune(releases, current_version):
 	'''
@@ -149,6 +152,10 @@ def worker(names):
 			if python_version not in PYTHON_VERSIONS:
 				logging.debug('Skipping python version %s: %s...' % (python_version, filename))
 				continue
+
+			if not 'win_amd64' in filename:
+				logging.debug('Skipping package OS %s: %s...' % ('win_amd64', filename))
+				continue
 			
 			
 			if packagetype not in PACKAGE_TYPES:
@@ -197,10 +204,9 @@ def worker(names):
 	afile.close()
 	return (pid, packages_downloaded, bytes_downloaded, bytes_cleaned)
 
-
 def get_config():
 	config_file = os.path.expanduser("~/.minirepo")
-	repository = os.path.expanduser("~/minirepo")
+	repository = "/home/minirepo"
 	processes = 10
 	try:
 		config 	= json.load(open(config_file))
@@ -248,6 +254,11 @@ def save_json(pids):
 	with open(db, 'a') as a:
 		a.write('\n]\n')
 
+def make_tarfile(tarfilename, directory):
+    with tarfile.open(tarfilename, "w") as tar:
+        tar.add(directory, arcname=os.path.basename(os.path.realpath(directory)))
+
+
 
 def main(repository='', processes=0):
 	global REPOSITORY,PROCESSES,PYTHON_VERSIONS,PACKAGE_TYPES,EXTENSIONS
@@ -283,11 +294,12 @@ def main(repository='', processes=0):
 		level=logging.WARNING, 
 		format="%(asctime)s:%(levelname)s: %(message)s")
 	
+	logging.warning('starting minirepo mirror...')
 	start = time.time()	
 
 	# prepare
 	names = get_names()
-	pool = mp.Pool(PROCESSES)
+	pool = mp.Pool(int(PROCESSES))
 	random.shuffle(names)
 	chunks = list(get_chunks(names, PROCESSES))
 	
@@ -306,7 +318,8 @@ def main(repository='', processes=0):
 
 	# cleanup
 	shutil.rmtree(TEMP)
-	print('temp folder deleted: %s' % TEMP)
+	logging.warning('temp folder deleted: %s' % TEMP)
+
 
 	# print summary
 	print('summary:')
@@ -316,6 +329,11 @@ def main(repository='', processes=0):
 	
 	print('time:', (time.time()-start))
 
+	logging.warning('making tar file...')
+	tar = '/home/minirepo.tar'
+	make_tarfile(tar, REPOSITORY)
+	logging.warning('minirepo mirror completed.')
+	
 
 
 if __name__ == '__main__':
