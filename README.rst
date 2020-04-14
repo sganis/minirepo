@@ -70,10 +70,10 @@ The firt time it's executed, the program will ask you for the local repository p
 
 	{
 		"processes"       : 20, 
-		"repository"      : "/home/user/minirepo"
+		"repository"      : "/home/user/minirepo",
 		"package_types"   : ["bdist_egg","bdist_wheel","sdist"], 
 		"extensions"      : ["bz2","egg","gz","tgz","whl","zip"], 
-		"python_versions" : ["2.7","any","cp27","py2","py27","source"], 
+		"python_versions" : ["2.7","any","cp27","py2","py27","source"] 
 	}
 
 
