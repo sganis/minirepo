@@ -221,10 +221,10 @@ def get_config():
 	try:
 		config 	= json.load(open(config_file))
 	except:
-		newrepo = raw_input('Repository folder [%s]: ' % repository)
+		newrepo = input('Repository folder [%s]: ' % repository)
 		if newrepo:
 			repository = newrepo
-		newprocesses = raw_input('Number of processes [%s]: ' % processes)
+		newprocesses = input('Number of processes [%s]: ' % processes)
 		if newprocesses:
 			processes = newprocesses
 		config = {}
@@ -233,6 +233,7 @@ def get_config():
 		config["python_versions"]	= PYTHON_VERSIONS
 		config["package_types"]		= PACKAGE_TYPES
 		config["extensions"]		= EXTENSIONS
+		config["platforms"] 		= PLATFORMS
 
 		with open(config_file, 'w') as w:
 			json.dump(config, w, indent=2)
@@ -272,7 +273,7 @@ def save_json(pids):
 
 
 def main(repository='', processes=0):
-	global REPOSITORY,PROCESSES,PYTHON_VERSIONS,PACKAGE_TYPES,EXTENSIONS
+	global REPOSITORY, PROCESSES, PYTHON_VERSIONS, PACKAGE_TYPES, EXTENSIONS, PLATFORMS
 	
 	print('/******** Minirepo ********/')
 	
@@ -283,6 +284,7 @@ def main(repository='', processes=0):
 	PYTHON_VERSIONS	= config["python_versions"]
 	PACKAGE_TYPES	= config["package_types"]
 	EXTENSIONS		= config["extensions"]
+	PLATFORMS 		= config["platforms"]
 	
 	# overwrite with paramerer
 	if repository: 		
