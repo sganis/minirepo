@@ -73,11 +73,12 @@ The firt time it's executed, the program will ask you for the local repository p
 		"repository"      : "/home/user/minirepo",
 		"package_types"   : ["bdist_egg","bdist_wheel","sdist"], 
 		"extensions"      : ["bz2","egg","gz","tgz","whl","zip"], 
-		"python_versions" : ["2.7","any","cp27","py2","py27","source"] 
+		"python_versions" : ["2.7","any","cp27","py2","py27","source"]
+        	"platforms"	  : ["linux"]
 	}
 
 
-Minirepo uses packages_types, extensions, and python_versions as filters. I was analysing the full list of packages available in pypi.python.org_, and it looks that all the options are something like the list below, you can try any other option. For me, I was only interested in python 2.7 packages, sources, wheels and eegs distributions, and some extensions.
+Minirepo uses packages_types, extensions, platforms and python_versions as filters. I was analysing the full list of packages available in pypi.python.org_, and it looks that all the options are something like the list below, you can try any other option. For me, I was only interested in python 2.7 packages, sources, wheels and eegs distributions, and some extensions.
 
 .. code:: python
 
@@ -96,6 +97,10 @@ Minirepo uses packages_types, extensions, and python_versions as filters. I was 
 	EXTENSIONS = [
 		'bz2', 'deb', 'dmg', 'egg', 'exe', 'gz', 'msi', 'rpm', 'tgz', 'whl', 'zip'
 	]
+
+    PLATFORMS = [
+        'linux', 'win32', 'win_amd64', 'macosx'
+    ]
 
 
 Use pip without internet
