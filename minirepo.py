@@ -66,7 +66,11 @@ def get_names():
     # resp = urllib2.urlopen('https://pypi.python.org/simple')
     # tree = ElementTree.parse(resp)
     resp = requests.get('https://pypi.python.org/simple')
-    tree = ElementTree.fromstring(resp.content)
+    tree = ElementTree.fromstring(
+		# Hotfix because the XML parser has issues with this specific tag, we remove it from the input
+		# TODO: A different XML parser might have less issues, see if this can be fixed properly
+		resp.content.replace(b'<meta name="pypi:repository-version" content="1.1">', b'')
+	)
     return [a.text for a in tree.iter('a')]
 
 def get_chunks(seq, num):
