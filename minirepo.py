@@ -13,6 +13,8 @@ import json
 import requests
 import multiprocessing as mp
 from xml.etree import ElementTree
+from bs4 import BeautifulSoup
+
 
 # logging.basicConfig(level=logging.INFO)
 
@@ -57,17 +59,25 @@ def bytes_human(num):
 	return "%3.1f%s" % (num, 'TB')
 
 def get_names():
-	# xmlrpc is slower
-	# import xmlrpclib
-	# xmlrpclib.ServerProxy('https://pypi.python.org/pypi')
-	# return client.list_packages()
-    
+        # xmlrpc is slower
+        # import xmlrpclib
+        # xmlrpclib.ServerProxy('https://pypi.python.org/pypi')
+        # return client.list_packages()
+
     # use simple API
     # resp = urllib2.urlopen('https://pypi.python.org/simple')
     # tree = ElementTree.parse(resp)
     resp = requests.get('https://pypi.python.org/simple')
-    tree = ElementTree.fromstring(resp.content)
-    return [a.text for a in tree.iter('a')]
+    print("HTML content:")
+    html_content = resp.content.decode('utf-8')
+    print(resp.content.decode('utf-8'))
+    try:
+        soup = BeautifulSoup(html_content, 'html.parser')
+        return [a.text for a in soup.find_all('a')]
+    except Exception as e:
+        print(f"HTML ParseError: {e}")
+        sys.exit(1)
+
 
 def get_chunks(seq, num):
 	"""split seq in chunks of size num,
@@ -214,35 +224,41 @@ def worker(names):
 	afile.close()
 	return (pid, packages_downloaded, bytes_downloaded, bytes_cleaned)
 
+
+try:
+    input = raw_input
+except NameError:
+    pass
 def get_config():
-	config_file = os.path.expanduser("~/.minirepo")
-	repository = "/home/minirepo"
-	processes = 10
-	try:
-		config 	= json.load(open(config_file))
-	except:
-		newrepo = input('Repository folder [%s]: ' % repository)
-		if newrepo:
-			repository = newrepo
-		newprocesses = input('Number of processes [%s]: ' % processes)
-		if newprocesses:
-			processes = newprocesses
-		config = {}
-		config["repository"]		= repository
-		config["processes"]			= processes
-		config["python_versions"]	= PYTHON_VERSIONS
-		config["package_types"]		= PACKAGE_TYPES
-		config["extensions"]		= EXTENSIONS
-		config["platforms"] 		= PLATFORMS
+        config_file = os.path.expanduser("~/.minirepo")
+        repository = os.path.expanduser("~/minirepo")
+        processes = 10
+        try:
+                with open(config_file, 'r') as f:
+                    config = json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+                newrepo = input('Repository folder [%s]: ' % repository)
+                if newrepo:
+                        repository = newrepo
+                newprocesses = input('Number of processes [%s]: ' % processes)
+                if newprocesses:
+                        processes = int(newprocesses)
+                config = {
+                "repository": repository,
+                "processes":process,
+                "python_versions":PYTHON_VERSIONS,
+                "package_types": PACKAGE_TYPES,
+                "extensions": EXTENSIONS
+                }
+                with open(config_file, 'w') as w:
+                        json.dump(config, w, indent=2)
 
-		with open(config_file, 'w') as w:
-			json.dump(config, w, indent=2)
+        for c in sorted(config):
+                print('%-15s = %s' % (c,config[c]))
+        print('Using config file %s ' % config_file)
 
-	for c in sorted(config):
-		print('%-15s = %s' % (c,config[c]))
-	print('Using config file %s ' % config_file)
+        return config
 
-	return config
 
 def save_json(pids):
 	# concatenate output from each worker
