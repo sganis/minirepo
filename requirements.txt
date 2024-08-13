@@ -1,0 +1,4 @@
+bs4==0.0.2
+requests==2.32.3
+wheel-filename==1.4.1
+
