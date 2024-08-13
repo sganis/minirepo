@@ -16,7 +16,7 @@ Create a local pypi repository to use pip off-line.
 
 Minirepo is a command-line program that downloads Python packages from pypi.python.org_, so you can use pip_ without internet. I needed to maintain a python repository in an isolated cluster environment, and after trying several tools to mirror pypi index, I dedided to make my own tool. 
 
-Some mirroring tools such us bandersnatch_ didn't meet my requirements, because I wanted to do a selective mirror, only downlowing all sources for python 2.7, for example. Bandersnatch gets the full content, about 140GB at the time of my first version of minirepo.
+Some mirroring tools such as bandersnatch_ didn't meet my requirements, because I wanted to do a selective mirror, only downlowing all sources for python 2.7, for example. Bandersnatch gets the full content, about 140GB at the time of my first version of minirepo.
 
 Then I was inspired by basket_, which is almost what I wanted, but you need to specify the list of packages to download. I ended up using the json API to get the packages that I needed, and then calling basket to download or update the packages. In the end, that approach was slow and buggy, so I wrote this small program to do what I just needed. Now, my minirepo folder has about 12GB with only the latest packages, and it takes about 20 minutes to mirror.
 
@@ -64,7 +64,7 @@ Usage
 	# or run the python script if you didn't install it:
 	$ ./minirepo.py
 
-The firt time it's executed, the program will ask you for the local repository path, which defaults to ~/minirepo in Linux. A json configuration file is created and saved as ~/.minirepo, that you can edit to your preferences. This configuration file looks like this:
+The first time it's executed, the program will ask you for the local repository path, which defaults to ~/minirepo in Linux. A json configuration file is created and saved as ~/.minirepo, that you can edit to your preferences. This configuration file looks like this:
 
 .. code:: javascript
 
