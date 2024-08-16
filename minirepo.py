@@ -54,6 +54,41 @@ session = requests.Session()
 adapter = requests.adapters.HTTPAdapter(max_retries=2)
 session.mount('https://', adapter)
 
+
+# Metdata file path 
+METADATA_FILE = "metadata.json" 
+
+# Load existing metadata from file
+def load_metadata():  
+    if os.path.exists(METADATA_FILE):  
+        with open(METADATA_FILE, "r") as f:  
+            return json.load(f) 
+    return {} 
+
+# Function to load existing metadata from file
+def save_metadata(metadata):  
+    with open(METADATA_FILE, "w") as f:  
+        json.dump(metadata, f, indent=4)  
+
+def is_package_downloaded(metadata, package_name, version, md5_digest):  
+    if package_name in metadata:  
+        package_info = metadata[package_name]  
+        if package_info["version"] == version and package_info["md5_digest"] == md5_digest:  
+            return True  
+    return False 
+
+# Function to update the metadata with newly downloaded package information
+def update_metadata(metadata, package_name, version, size, md5_digest):  
+    metadata[package_name] = {  
+        "version": version,  
+        "size": size,  
+        "md5_digest": md5_digest  
+    } 
+
+
+
+
+
 def bytes_human(num):
 	for x in ['bytes','KB','MB','GB']:
 		if num < 1024.0:
@@ -115,6 +150,10 @@ def prune(releases, current_version):
 				logging.warning('Deleted   : %s' % dist['filename'])
 	return bytes
 
+
+
+
+
 def worker(args):
 	'''
 	function to run in parallel, names is a list of packages names,
@@ -134,6 +173,9 @@ def worker(args):
 	bytes_downloaded = 0
 	bytes_cleaned = 0
 	
+	# Load metadata at the start of the worker
+	metadata = load_metadata()
+
 	for p in names:	
 		try:
 			i+=1
@@ -171,8 +213,12 @@ def worker(args):
 			python_version  = url['python_version']
 			download_url 	= url['url']						
 			size 			= url['size']
-			md5_digest 		= url['md5_digest']		
-			
+			md5_digest 		= url['md5_digest']
+
+			if is_package_downloaded(metadata, name, version, md5_digest):  
+				logging.warning('Already downloaded: %s' % filename)  
+				continue
+					
 			if python_version not in python_versions:
 				python_versions[python_version] = 0
 			python_versions[python_version] += 1
@@ -241,6 +287,10 @@ def worker(args):
 				# sum total bytes and count
 				bytes_downloaded += size
 				packages_downloaded += 1
+
+				# Update metadata after successful download
+				update_metadata(metadata, name, version, size, md5_digest)
+				save_metadata(metadata)
 
 				# verify with md5
 				check = 'Ok' if hashlib.md5(resp.content).hexdigest() == md5_digest else 'md5 failed'
