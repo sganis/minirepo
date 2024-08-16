@@ -4,7 +4,7 @@
 
 import sys
 import os
-import signal  # New import for handling signals
+import signal  
 import time
 import shutil
 import random
