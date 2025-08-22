@@ -77,6 +77,12 @@ The first time it's executed, the program will ask you for the local repository 
         	"platforms"	  : ["linux"]
 	}
 
+The location of the configuration file and the repository can be set by environment variables:
+
+.. code::
+
+MINIREPO_CONFIG="./minirepo_conf.json" MINIREPO_REPO="~/tmp/minirepo" ./minirepo.py
+
 
 Minirepo uses packages_types, extensions, platforms and python_versions as filters. I was analysing the full list of packages available in pypi.python.org_, and it looks that all the options are something like the list below, you can try any other option. For me, I was only interested in python 2.7 packages, sources, wheels and eegs distributions, and some extensions.
 
