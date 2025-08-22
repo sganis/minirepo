@@ -264,35 +264,35 @@ def worker(args):
 	return (pid, packages_downloaded, bytes_downloaded, bytes_cleaned)
 
 def get_config():
-        config_file = os.path.expanduser("~/.minirepo")
-        repository = os.path.expanduser("~/minirepo")
-        processes = PROCESSES
-        try:
-                with open(config_file, 'r') as f:
-                    config = json.load(f)
-        except (json.JSONDecodeError, FileNotFoundError):
-                newrepo = input(f'Repository folder [{repository}]: ')
-                if newrepo:
-                        repository = newrepo
-                newprocesses = input(f'Number of processes [{processes}]: ')
-                if newprocesses:
-                        processes = int(newprocesses)
-                config = {
-					"repository": repository,
-					"processes": processes,
-					"python_versions":PYTHON_VERSIONS,
-					"package_types": PACKAGE_TYPES,
-					"extensions": EXTENSIONS,
-					"platforms": PLATFORMS,
-                }
-                with open(config_file, 'w') as w:
-                        json.dump(config, w, indent=2)
+	config_file = os.path.expanduser("~/.minirepo")
+	repository = os.path.expanduser("~/minirepo")
+	processes = PROCESSES
+	try:
+		with open(config_file, 'r') as f:
+			config = json.load(f)
+	except (json.JSONDecodeError, FileNotFoundError):
+		newrepo = input(f'Repository folder [{repository}]: ')
+		if newrepo:
+			repository = newrepo
+		newprocesses = input(f'Number of processes [{processes}]: ')
+		if newprocesses:
+			processes = int(newprocesses)
+		config = {
+			"repository": repository,
+			"processes": processes,
+			"python_versions":PYTHON_VERSIONS,
+			"package_types": PACKAGE_TYPES,
+			"extensions": EXTENSIONS,
+			"platforms": PLATFORMS,
+		}
+		with open(config_file, 'w') as w:
+			json.dump(config, w, indent=2)
 
-        for c in sorted(config):
-                print('%-15s = %s' % (c,config[c]))
-        print('Using config file %s ' % config_file)
+	for c in sorted(config):
+		print('%-15s = %s' % (c,config[c]))
+	print('Using config file %s ' % config_file)
 
-        return config
+	return config
 
 def save_json(pids):
 	# concatenate output from each worker
